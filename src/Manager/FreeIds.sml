@@ -166,6 +166,7 @@ structure FreeIds:  FREE_IDS =
       fn ATEXPexp(_,atexp) => free_atexp I atexp
        | APPexp(_,exp,atexp) => (free_exp I exp; free_atexp I atexp)
        | TYPEDexp(_,exp,ty) => (free_exp I exp; free_ty I ty)
+       | CASTexp(_,ty2,ty1,exp) => (free_exp I exp; free_ty I ty1; free_ty I ty2) 
        | HANDLEexp(_,exp,match) => (free_exp I exp; free_match I match)
        | RAISEexp(_,exp) => free_exp I exp
        | FNexp(_,match) => free_match I match

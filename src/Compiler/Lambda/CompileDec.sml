@@ -2194,6 +2194,8 @@ end; (*match compiler local*)
 
 	   | TYPEDexp(_, exp, _) => compileExp env exp
 
+	   | CASTexp(_, _, _, exp) => compileExp env exp (*for now, we do not need to do anything fancy on compilation. this will change eventually.*) 
+
 	   | HANDLEexp (info, exp', match) =>
 	       let val e1' = compileExp env exp'
 		   val tau_return = compileType (type_of_exp exp)

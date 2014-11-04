@@ -167,6 +167,7 @@ functor LexUtils(Token: Topdec_TOKENS): LEX_UTILS =
 	   | "andalso"	 => keyword ANDALSO
 	   | "as"	 => keyword AS
 	   | "case"	 => keyword CASE
+	   | "cast"	 => keyword CAST
 	   | "do"	 => keyword DO
 	   | "datatype"	 => keyword DATATYPE
 	   | "else"	 => keyword ELSE

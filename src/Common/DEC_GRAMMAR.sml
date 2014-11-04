@@ -36,6 +36,7 @@ sig
 	APPexp of info * exp * atexp |
 	TYPEDexp of info * exp * ty |
 	HANDLEexp of info * exp * match |
+	CASTexp of info * ty * ty * exp |
 	RAISEexp of info * exp |
 	FNexp of info * match |
 	UNRES_INFIXexp of info * atexp list

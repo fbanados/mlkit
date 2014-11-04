@@ -132,6 +132,8 @@ structure Environments: ENVIRONMENTS =
 	  unguarded_exp exp ++ unguarded_atexp atexp
 	| unguarded_exp(DecGrammar.TYPEDexp(_,exp,ty)) =
 	  unguarded_exp exp ++ unguarded_ty ty
+	| unguarded_exp (DecGrammar.CASTexp(_,ty2,ty1,exp)) =
+	  unguarded_ty ty2 ++ unguarded_ty ty1 ++ unguarded_exp exp
 	| unguarded_exp(DecGrammar.HANDLEexp(_,exp,match)) =
 	  unguarded_exp exp ++ unguarded_match match
 	| unguarded_exp(DecGrammar.RAISEexp(_,exp)) =
@@ -1482,6 +1484,14 @@ old *)
 	val TE_ref = TE.singleton (TyCon.tycon_REF,
 				  mk_tystr (TyName.tyName_REF, VE.close refVE_to_TE))
 
+	local (* TE for Dyn. should be very similar to unit *)
+	    val theta_dyn = TypeFcn.from_TyVars_and_Type ([], Type.Dyn)
+	    val VE_dyn = VE.empty
+	in
+	  val TE_dyn = TE.singleton (TyCon.tycon_DYN,
+				     TyStr.from_theta_and_VE (theta_dyn, VE_dyn))
+	end
+				    
 	local   (* initial TE for unit *)
 	  val theta_unit = TypeFcn.from_TyVars_and_Type ([], Type.Unit)
 	  val VE_unit = VE.empty
@@ -1490,7 +1500,7 @@ old *)
 				      TyStr.from_theta_and_VE (theta_unit, VE_unit))
 	end
 
-	val TE_initial0 = joinTE [TE_unit, TE_char, TE_real,
+	val TE_initial0 = joinTE [TE_dyn, TE_unit, TE_char, TE_real,
 				  TE_int31, TE_int32, TE_intinf,
 				  TE_word8, TE_word31, TE_word32,
 				  TE_string, TE_exn, TE_ref, TE_bool, TE_list,

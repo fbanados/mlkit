@@ -138,6 +138,7 @@ signature STATOBJECT =
 						      * for resolving overloading. *)
 	val String                  : Type
 	val Char                    : Type
+    val Dyn                     : Type (* First modification. added type Dyn. *)
  
 	val of_scon                 : scon -> {type_scon: Type, overloading : TyVar option}
 

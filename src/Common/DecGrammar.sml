@@ -45,6 +45,7 @@ struct
 	ATEXPexp of info * atexp |
 	APPexp of info * exp * atexp |
 	TYPEDexp of info * exp * ty |
+	CASTexp of info * ty * ty * exp |
 	HANDLEexp of info * exp * match |
         RAISEexp of info * exp |
 	FNexp of info * match |
@@ -139,6 +140,7 @@ struct
     | TYPEDexp x => (#1) x
     | HANDLEexp x => (#1) x
     | RAISEexp x => (#1) x
+    | CASTexp x => (#1) x 
     | FNexp x => (#1) x
     | UNRES_INFIXexp x => (#1 x)
 
@@ -249,6 +251,8 @@ struct
 	  APPexp(f i, map_exp_info f exp, map_atexp_info f atexp)
       | TYPEDexp(i, exp, ty) =>
 	  TYPEDexp(f i, map_exp_info f exp, ty)
+      | CASTexp(i, ty1, ty2, exp) =>
+	  CASTexp(f i, ty1, ty2, map_exp_info f exp) 
       | HANDLEexp(i, exp, match) =>
 	  HANDLEexp(f i, map_exp_info f exp, map_match_info f match)
       | RAISEexp(i, exp) => 
@@ -388,6 +392,7 @@ struct
       fun nexp_exp (ATEXPexp(info, atexp)) = nexp_atexp atexp
 	| nexp_exp (APPexp(info, exp, atexp)) = conexp_exp exp andalso nexp_atexp atexp
 	| nexp_exp (TYPEDexp(info, exp,  ty)) = nexp_exp exp
+	| nexp_exp (CASTexp(info, ty1, ty2, exp)) = nexp_exp exp 
 	| nexp_exp (FNexp(info, match)) = true
 	| nexp_exp _ = false
 
@@ -403,6 +408,7 @@ struct
 
       and conexp_exp (ATEXPexp(info, atexp)) = conexp_atexp atexp
 	| conexp_exp (TYPEDexp(info, exp, ty)) = conexp_exp exp
+	| conexp_exp (CASTexp(info, ty1, ty2, exp)) = conexp_exp exp 
 	| conexp_exp _ = false
 
       and conexp_atexp (IDENTatexp(info, OP_OPT(longid, ?))) =
@@ -564,6 +570,18 @@ struct
 		       childsep=LEFT " : "
 		      }
 	     end
+
+	 | CASTexp(_, ty2, ty1, exp) =>
+	   let
+	       val expT = layoutExp exp
+	       val ty1T = layoutTy ty1
+	       val ty2T = layoutTy ty2
+	   in
+	       NODE{start="cast ", finish="", indent=5,
+		    children = [ty2T, ty1T, expT],
+		    childsep =LEFT " "
+		   }
+	   end
 
 	 | HANDLEexp(_, exp, match) =>
 	     let

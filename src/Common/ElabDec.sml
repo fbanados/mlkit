@@ -574,6 +574,26 @@ structure ElabDec: ELABDEC =
 		   | (NONE, out_ty) => (S1, tau, OG.TYPEDexp(okConv i, out_exp, out_ty))
 	     end
 
+	 | IG.CASTexp(i, ty2, ty1, exp) => (* new rule *)
+	   let val(S1, tau, out_exp) = elab_exp(C, exp)
+	   in case elab_ty(S1 onC C, ty1)
+	       of (SOME tau', in_ty) =>
+		  let val (S2, i') = UnifyWithTexts("type of casted expression",tau,"disagrees with source type constraint", tau', i)
+		      val S3 = S2 oo S1
+		  in case elab_ty (S3 onC C, ty2)
+		      of (SOME tau'', out_ty) =>
+			 (S3, tau'', OG.CASTexp(addTypeInfo_EXP(i',S3 on tau'), out_ty, in_ty, out_exp)) 
+		       | (NONE, out_ty) => (S3, tau', OG.CASTexp(addTypeInfo_EXP(i', tau'), out_ty, in_ty, out_exp))
+		  end
+		| (NONE, in_ty) => case elab_ty (S1 onC C, ty2)
+				    of (SOME tau', out_ty) =>
+				       (S1, tau', OG.CASTexp(okConv i, out_ty, in_ty, out_exp))
+				     | (NONE, out_ty) =>
+				       (S1, tau, OG.CASTexp(okConv i, out_ty, in_ty, out_exp))
+	   end
+	       
+			 
+
            (* Handle exception *)                               (*rule 10*)
          | IG.HANDLEexp(i, exp, match) =>
              let
@@ -2013,6 +2033,7 @@ let
       ATEXPexp(i, atexp) => ATEXPexp(resolve_i i, resolve_atexp atexp)
     | APPexp(i, exp, atexp) => APPexp(resolve_i i, resolve_exp exp, resolve_atexp atexp)
     | TYPEDexp(i, exp, ty) => TYPEDexp(resolve_i i, resolve_exp exp, ty)
+    | CASTexp(i, ty2, ty1, exp) => CASTexp(resolve_i i, ty2, ty1, resolve_exp exp) 
     | HANDLEexp(i, exp, match) => HANDLEexp(resolve_i i, resolve_exp exp, resolve_match match)
     | RAISEexp(i, exp) => RAISEexp(resolve_i i, resolve_exp exp)
     | FNexp(i, match) => FNexp(resolve_i i, resolve_match match)

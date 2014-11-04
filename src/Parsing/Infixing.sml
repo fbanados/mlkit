@@ -740,7 +740,10 @@ structure Infixing: INFIXING =
 
          | TYPEDexp(i, exp, ty) =>
              TYPEDexp(i, resolveExp(iBas, exp), ty)
-
+		   
+	 | CASTexp(i, ty2, ty1, exp) =>
+	     CASTexp(i, ty2, ty1, resolveExp(iBas, exp))
+		  
          | HANDLEexp(i, exp, match) =>
              HANDLEexp(i, resolveExp(iBas, exp), resolveMatch(iBas, match))
 

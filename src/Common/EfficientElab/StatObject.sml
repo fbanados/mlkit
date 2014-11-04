@@ -904,6 +904,8 @@ structure StatObject: STATOBJECT =
       val Bool         = mk_ConsType ([], TyName.tyName_BOOL)
       val Char         = mk_ConsType ([], TyName.tyName_CHAR)
 
+      val Dyn          = mk_ConsType ([], TyName.tyName_DYN)
+
       val Word8        = mk_ConsType ([], TyName.tyName_WORD8)
       val Word31       = mk_ConsType ([], TyName.tyName_WORD31)
       val Word32       = mk_ConsType ([], TyName.tyName_WORD32)

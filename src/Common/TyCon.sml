@@ -39,6 +39,7 @@ structure TyCon: TYCON =
     val tycon_REAL   = TYCON "real"
     val tycon_STRING = TYCON "string"
     val tycon_CHAR   = TYCON "char"
+    val tycon_DYN    = TYCON "dyn"
     val tycon_EXN    = TYCON "exn"
     val tycon_REF    = TYCON "ref"
     val tycon_BOOL   = TYCON "bool"

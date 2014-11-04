@@ -22,6 +22,7 @@ signature TYCON =
     val tycon_WORD32 : tycon
     val tycon_REAL   : tycon
     val tycon_STRING : tycon
+    val tycon_DYN    : tycon
     val tycon_CHAR   : tycon
     val tycon_EXN    : tycon
     val tycon_REF    : tycon

@@ -79,6 +79,7 @@ signature TYNAME =
     val tyName_CHARARRAY : TyName
     val tyName_FOREIGNPTR : TyName
     val tyName_EXN     : TyName
+    val tyName_DYN     : TyName
 
     val unboxed : TyName -> bool   (* Returns true for type names that are 
 				    * implemented unboxed; depends on whether

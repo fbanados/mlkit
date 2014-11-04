@@ -140,6 +140,11 @@ structure OpacityElim: OPACITY_ELIM =
 	       val i' = on_info(rea,i)
 	   in (TYPEDexp(i',exp',ty), rea')
 	   end
+	  | CASTexp(i,ty2,ty1,exp) =>
+	    let val (exp', rea') = elim_exp(rea,exp)
+		val i' = on_info(rea, i)
+	    in (CASTexp(i',ty2,ty1,exp'), rea')
+	    end
 	  | HANDLEexp(i,exp,match) =>
 	   let val (exp',rea') = elim_exp(rea,exp)
 	       val (match',rea'') = elim_match(rea,match)

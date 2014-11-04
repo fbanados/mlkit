@@ -327,6 +327,9 @@ structure ErrorTraverse : ERROR_TRAVERSE =
 	 | TYPEDexp(i, exp, ty) =>
 	     check i // walk_Exp exp // walk_Ty ty
 
+	 |  CASTexp(i, ty2, ty1, exp) =>
+	    check i // walk_Exp exp // walk_Ty ty1 // walk_Ty ty2
+
 	 | HANDLEexp(i, exp, match) =>
 	     check i // walk_Exp exp // walk_Match match
 

@@ -120,6 +120,9 @@ type arg = unit
         | INFIXR | LET | LOCAL | NONFIX | OF | OP | OPEN | ORELSE
         | RAISE | REC | THEN | TYPE | VAL | WITH | WITHTYPE | WHILE
 
+(* The word I'm taking for casts *)
+        | CAST 
+
 (* Symbolic reserved words: *)
         | LPAREN | RPAREN | LBRACKET | RBRACKET | LBRACE | RBRACE
         | COMMA | COLON | SEMICOLON | DOTDOTDOT | UNDERBAR | BAR
@@ -394,7 +397,7 @@ type arg = unit
          parse fails. *)
 
 %keyword        EQTYPE FUNCTOR INCLUDE SHARING SIG SIGNATURE STRUCT
-                STRUCTURE ABSTYPE AND ANDALSO AS CASE DO DATATYPE ELSE
+                STRUCTURE ABSTYPE AND ANDALSO AS CASE CAST DO DATATYPE ELSE
                 END EXCEPTION FN FUN HANDLE IF IN INFIX
                 INFIXR LET LOCAL NONFIX OF OP OPEN ORELSE
                 RAISE REC THEN TYPE VAL WHERE WITH WITHTYPE WHILE
@@ -962,6 +965,8 @@ Exp_:     AtExp_seq1    ( UNRES_INFIXexp (PP AtExp_seq1left AtExp_seq1right, AtE
         | IF Exp_ THEN Exp_ ELSE Exp_
                         ( if_then_else_exp (PP IFleft (right (get_info_exp Exp_3)))
 			    (Exp_1, Exp_2, Exp_3) )
+        | CAST Ty IN Ty COLON Exp_
+                ( CASTexp (PP CASTleft (right (get_info_exp Exp_)), Ty1, Ty2, Exp_))
         | Exp_ ORELSE Exp_
                         ( let val info = PP Exp_1left (right (get_info_exp Exp_2))
 			  in

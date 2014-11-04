@@ -210,7 +210,8 @@ structure CompilerEnv: COMPILER_ENV =
 			  (tycon_FRAG, ([tyName_FRAG], fromVarEnv fragVE)),
 			  (tycon_INTINF, ([tyName_INTINF], emptyCEnv)),
 			  (*		       (tycon_WORD_TABLE, ([tyName_WORD_TABLE], emptyCEnv)), *)
-			  (tycon_UNIT, ([], emptyCEnv))
+			  (tycon_UNIT, ([], emptyCEnv)),
+			  (tycon_DYN, ([], emptyCEnv))
 			  ])
     in
       fun initialCEnv() = CENV{StrEnv=initialStrEnv,
