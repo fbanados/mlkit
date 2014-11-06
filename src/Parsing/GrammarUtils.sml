@@ -223,17 +223,6 @@ structure GrammarUtils: GRAMMAR_UTILS =
 	    case_exp info
 	      (ifExp, MATCH (info, mruleT, SOME (MATCH (info, mruleF, NONE))))
 	  end
-
-
-      
-    fun cast_exp info (tyDest, tyOrig, exp) =
-          let
-	    val mruleT = MRULE (info, patOfIdent info (Ident.id_TRUE, false), tyOrig)
-	    val mruleF = MRULE (info, patOfIdent info (Ident.id_FALSE, false), exp)
-	  in
-	    case_exp info
-	      (tyDest, MATCH (info, mruleT, SOME( MATCH (info, mruleF, NONE))))
-	  end
       
 
     fun while_exp info (whileExp, doExp) =

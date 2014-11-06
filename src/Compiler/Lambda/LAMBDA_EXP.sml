@@ -1,4 +1,5 @@
 
+
 signature LAMBDA_EXP =
   sig
 
@@ -52,6 +53,7 @@ signature LAMBDA_EXP =
     val wordDefaultType : unit -> Type  (* word31 if tag_values, otherwise word32 *)
     val realType: Type
     val stringType: Type
+    val dynType: Type
 
     datatype TypeList =                               (* To allow the result of a declaration *)  
         Types of Type list                            (* to be a raised Bind exception. *)

@@ -28,6 +28,7 @@ signature CON =
     val con_FALSE : con
     val con_NIL   : con
     val con_CONS  : con
+    val con_DYN   : con
 
     val con_QUOTE : con
     val con_ANTIQUOTE : con

@@ -42,6 +42,7 @@ structure Con :> CON where type name = Name.name
 	val con_REF   : con      = predef "ref"
 	val con_TRUE  : con      = predef "true"
 	val con_FALSE : con      = predef "false"
+	val con_DYN   : con      = predef "dyn"
 	val con_NIL   : con      = predef "nil"
 	val con_CONS  : con      = predef "::"	    
 	val con_QUOTE : con      = predef "QUOTE"

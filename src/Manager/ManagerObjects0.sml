@@ -241,6 +241,7 @@ functor ManagerObjects0(structure Execution : EXECUTION)
 			       TyName.tyName_WORD32,
 			       TyName.tyName_STRING,  (* string is needed for string constants *)
 			       TyName.tyName_CHAR,    (* char is needed for char constants *)
+			       TyName.tyName_DYN,     (* because without this the system trims dyn *)
 			       TyName.tyName_REF,
 			       TyName.tyName_REAL]    (* real needed because of overloading *)
 		  @ TyName.Set.list tynames

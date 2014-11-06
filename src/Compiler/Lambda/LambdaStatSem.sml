@@ -181,6 +181,7 @@ structure LambdaStatSem: LAMBDA_STAT_SEM =
 			       (tyName_FOREIGNPTR, []),
 			       (tyName_ARRAY, []),
 			       (tyName_VECTOR, []),
+			       (tyName_DYN, []),
 			       (tyName_REF, [(*Con.con_REF*)]),
 			       (tyName_EXN, [])]
 

@@ -66,6 +66,7 @@ structure LambdaExp: LAMBDA_EXP =
     val realType = CONStype([], TyName.tyName_REAL)
     val stringType = CONStype([], TyName.tyName_STRING)
     val unitType = RECORDtype([])
+    val dynType = CONStype([], TyName.tyName_DYN)
 
     val tyvars = foldType (fn tyvarset =>
 			   (fn TYVARtype tyvar => EqSet.insert tyvar tyvarset
