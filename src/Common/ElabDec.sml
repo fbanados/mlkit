@@ -185,7 +185,10 @@ structure ElabDec: ELABDEC =
             ElabInfo.plus_TypeInfo ElabInfo (RECORD_ATPAT_INFO {Type=Type})
 
       fun addTypeInfo_EXP (ElabInfo, tau) =
-            ElabInfo.plus_TypeInfo ElabInfo (EXP_INFO {Type=tau})
+          ElabInfo.plus_TypeInfo ElabInfo (EXP_INFO {Type=tau})
+
+      fun addTypeInfo_CAST (ElabInfo, tau2, tau1) =
+	  ElabInfo.plus_TypeInfo ElabInfo (CAST_INFO {source=tau1, dest=tau2})
 
       fun addTypeInfo_MATCH (ElabInfo, tau) =
             ElabInfo.plus_TypeInfo ElabInfo (MATCH_INFO {Type=tau})
@@ -575,21 +578,24 @@ structure ElabDec: ELABDEC =
 	     end
 
 	 | IG.CASTexp(i, ty2, ty1, exp) => (* new rule *)
-	   let val(S1, tau, out_exp) = elab_exp(C, exp)
+	   let val (S1, tau, out_exp) = elab_exp(C, exp)
 	   in case elab_ty(S1 onC C, ty1)
 	       of (SOME tau', in_ty) =>
 		  let val (S2, i') = UnifyWithTexts("type of casted expression",tau,"disagrees with source type constraint", tau', i)
 		      val S3 = S2 oo S1
 		  in case elab_ty (S3 onC C, ty2)
 		      of (SOME tau'', out_ty) =>
-			 (S3, tau'', OG.CASTexp(addTypeInfo_EXP(i',S3 on tau'), out_ty, in_ty, out_exp)) 
-		       | (NONE, out_ty) => (S3, tau', OG.CASTexp(addTypeInfo_EXP(i', tau'), out_ty, in_ty, out_exp))
+			 (S3, tau'', OG.CASTexp(addTypeInfo_CAST(i',tau'', S3 on tau'), out_ty, in_ty, out_exp))
+		      | _  => raise Fail ("ElabDec.sml error for typing cast.")
+		       (*| (NONE, out_ty) => (S3, tau', OG.CASTexp(addTypeInfo_CAST(i', tau'), out_ty, in_ty, out_exp))*)
 		  end
+	       | _ => raise Fail("ElabDec.sml error for typing cast.")
+	   (*
 		| (NONE, in_ty) => case elab_ty (S1 onC C, ty2)
 				    of (SOME tau', out_ty) =>
 				       (S1, tau', OG.CASTexp(okConv i, out_ty, in_ty, out_exp))
-				     | (NONE, out_ty) =>
-				       (S1, tau, OG.CASTexp(okConv i, out_ty, in_ty, out_exp))
+				      (NONE, out_ty) =>
+				       (S1, tau, OG.CASTexp(okConv i, out_ty, in_ty, out_exp))*)
 	   end
 	       
 			 
@@ -1970,6 +1976,7 @@ let
 	 | TYENV_INFO TE => TYENV_INFO TE                  (*no free tyvars here*)
 	 | ABSTYPE_INFO (TE,rea) => ABSTYPE_INFO (TE,rea)  (*no free tyvars here*)
 	 | EXP_INFO {Type} => EXP_INFO {Type=S on Type}
+	 | CAST_INFO{source, dest} => CAST_INFO{source=S on source, dest=S on dest} 
 	 | MATCH_INFO {Type} => MATCH_INFO {Type=S on Type}
 	 | PLAINvalbind_INFO {tyvars,Type} =>
 	  PLAINvalbind_INFO {tyvars=tyvars, Type=S on Type}

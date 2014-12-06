@@ -28,6 +28,9 @@ structure TyName :> TYNAME =
 		   equality: bool,
 		   unboxed: bool ref}
 
+    (* hack: make tycon available... remove later. *)
+    val mk_TyCon = TyCon.mk_TyCon
+		       
     structure Rank =
       struct
 	type rank = rank

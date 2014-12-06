@@ -32,6 +32,7 @@ signature TYNAME =
 
     val freshTyName  : {tycon : tycon, arity : int, equality : bool} -> TyName
     val pr_TyName : TyName -> string
+    val mk_TyCon: string -> tycon
 
     val eq : TyName * TyName -> bool
 

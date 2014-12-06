@@ -40,6 +40,7 @@ structure TyCon: TYCON =
     val tycon_STRING = TYCON "string"
     val tycon_CHAR   = TYCON "char"
     val tycon_DYN    = TYCON "dyn"
+    val tycon_RUNTIMETYPE = TYCON "RuntimeType"
     val tycon_EXN    = TYCON "exn"
     val tycon_REF    = TYCON "ref"
     val tycon_BOOL   = TYCON "bool"

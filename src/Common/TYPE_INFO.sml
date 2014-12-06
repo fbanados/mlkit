@@ -75,6 +75,8 @@ signature TYPE_INFO =
 			 * construct *)
       | EXP_INFO of {Type: Type} 
 	                (* Attached to all exp's and SCONatexp *)
+      | CAST_INFO of {source:Type, dest: Type}
+			 (* Attached to runtime casts. *)
       | MATCH_INFO of {Type: Type}
 	                (* Attached to MATCH and SCONatpat *)
       | PLAINvalbind_INFO of {tyvars: TyVar list, Type: Type}

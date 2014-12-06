@@ -97,6 +97,7 @@ signature LAMBDA_EXP =
       | WORD     of Word32.word * Type
       | STRING   of string
       | REAL     of string
+      | CAST     of {ty2 : Type, ty1: Type, exp : LambdaExp}
       | FN       of {pat : (lvar * Type) list, body : LambdaExp}
       | LET      of {pat : (lvar * tyvar list * Type) list,
 		     bind : LambdaExp,

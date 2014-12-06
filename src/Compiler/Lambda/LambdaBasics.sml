@@ -4,7 +4,13 @@ structure LambdaBasics: LAMBDA_BASICS =
     structure PP = PrettyPrint
     structure TLE = LambdaExp
     open TLE
-
+    local
+      fun msg(s: string) = 
+	  (TextIO.output(!Flags.log, s); TextIO.flushOut (!Flags.log))
+    in
+      fun chat(s: string) = if !Flags.chat then msg (s^"\n") else ()
+    end
+    
     fun die s = Crash.impossible ("LambdaBasics." ^ s)
 
     fun log x = TextIO.output(!Flags.log,x)
@@ -36,6 +42,7 @@ structure LambdaBasics: LAMBDA_BASICS =
 	   | STRING _ => lamb
 	   | REAL _ => lamb
 	   | FN{pat,body} => FN{pat=pat,body=passTD f body}
+	   | CAST{ty2, ty1, exp} => CAST{ty2=ty2, ty1=ty1, exp=passTD f exp}
 	   | LET{pat,bind,scope} => LET{pat=pat,bind=passTD f bind,scope = passTD f scope}
 	   | FIX{functions,scope} => FIX{functions=map (fn {lvar, tyvars, Type, bind} =>
 							{lvar=lvar,tyvars=tyvars,
@@ -78,6 +85,7 @@ structure LambdaBasics: LAMBDA_BASICS =
 	      | STRING _ => lamb
 	      | REAL _ => lamb
 	      | FN{pat,body} => FN{pat=pat,body=passBU f body}
+	      | CAST{ty2, ty1, exp} => CAST{ty2=ty2, ty1=ty1, exp=passBU f exp} 
 	      | LET{pat,bind,scope} => LET{pat=pat,bind=passBU f bind,scope = passBU f scope}
 	      | FIX{functions,scope} => FIX{functions=map (fn {lvar, tyvars, Type, bind} =>
 							   {lvar=lvar,tyvars=tyvars,Type=Type,bind=passBU f bind}) 
@@ -118,6 +126,7 @@ structure LambdaBasics: LAMBDA_BASICS =
 	   | STRING _ => new_acc
 	   | REAL _ => new_acc
 	   | FN{pat,body} => foldTD f new_acc body
+	   | CAST{ty2, ty1, exp} => foldTD f new_acc exp 
 	   | LET{pat,bind,scope} => foldTD f (foldTD f new_acc bind) scope
 	   | FIX{functions,scope} => foldTD f (foldl' (foldTD f) new_acc  (map #bind functions)) scope
 	   | APP(lamb1, lamb2, _) => foldTD f (foldTD f new_acc lamb1) lamb2
@@ -154,7 +163,8 @@ structure LambdaBasics: LAMBDA_BASICS =
          | WORD _ => lamb
          | REAL _ => lamb
          | STRING _ => lamb
-	 | FN{pat,body} => FN{pat=pat,body=f body} 
+	 | FN{pat,body} => FN{pat=pat,body=f body}
+	 | CAST{ty2, ty1, exp} => CAST{ty2=ty2, ty1=ty1, exp=f exp}
          | LET{pat,bind,scope} => LET{pat=pat,bind=f bind,scope=f scope}
 	 | FIX{functions,scope} =>
 	       FIX{functions=map (fn {lvar,tyvars,Type,bind} => {lvar=lvar,
@@ -162,7 +172,7 @@ structure LambdaBasics: LAMBDA_BASICS =
 								 Type=Type,
 								 bind=f bind}) functions,
 		   scope=f scope}
-	 | APP(e1,e2, tc) => APP(f e1, f e2, tc) 
+	 | APP(e1,e2, tc) => APP(f e1, f e2, tc)
 	 | EXCEPTION(excon,ty_opt,scope) => EXCEPTION(excon,ty_opt, f scope) 
          | RAISE(e,tl) => RAISE(f e, tl) 
 	 | HANDLE(e1,e2) => HANDLE(f e1, f e2) 	   
@@ -197,6 +207,7 @@ structure LambdaBasics: LAMBDA_BASICS =
          | REAL _ => ()
          | STRING _ => ()
 	 | FN{pat,body} => f body
+	 | CAST{ty2, ty1, exp} => f exp 
          | LET{pat,bind,scope} => (f bind; f scope)
 	 | FIX{functions,scope} => (app (f o #bind) functions; f scope)
 	 | APP(e1,e2,_) => (f e1; f e2) 
@@ -388,6 +399,7 @@ structure LambdaBasics: LAMBDA_BASICS =
 	   | FN{pat,body} => let val (pat', ren') = new_fnpat pat ren
 			     in FN{pat=pat', body=on_e ren' body}
 			     end
+	   | CAST{ty2, ty1, exp} => CAST{ty2=ty2, ty1=ty1, exp=on_e ren exp} 
 	   | LET{pat,bind,scope} => let val (pat', ren_bind, ren_scope) = new_letpat pat ren
 				    in LET{pat=pat',bind=on_e ren_bind bind, scope=on_e ren_scope scope}
 				    end
@@ -561,6 +573,7 @@ structure LambdaBasics: LAMBDA_BASICS =
 		 | REAL _ => lamb
 		 | FN{pat,body} => FN{pat = map (fn (lv, Type) => (lv, on_Type S Type)) pat, 
 				      body = f S body}
+		 | CAST{ty2, ty1, exp} => CAST{ty2=on_Type S ty2, ty1=on_Type S ty1,exp=f S exp} 
 		 | LET{pat,bind,scope} => let val (S',pat') = on_let_pat S pat
 					  in LET{pat = pat',
 						 bind = f S' bind,
@@ -611,6 +624,23 @@ structure LambdaBasics: LAMBDA_BASICS =
 
       val on_LambdaExp = on_LambdaExp
 
+			     (*
+      fun consistent_Type(tau1, tau2) =
+	  case (tau1, tau2)
+	   of
+	      (ARROWtype(taus1, taus1'), ARROWtype (taus2, taus2')) =>
+	      consistent_Types(taus1, taus2) andalso consistent_Types(taus1', taus2')
+	    | (CONStype(taus1, tn1), CONStype(taus2, tn2)) =>
+	      consistent_Types(taus1, taus2) andalso TyName.eq(tn1, tn2)
+							      (* todo: check if this needs to consider dyn too *)
+	    | (RECORDtype taus1, RECORDtype taus2) => consistent_Types(taus1, taus2)
+	    | (dynType, _) => true
+	    |  (_, dynType) => true
+	    | (_, _) => false
+      and consistent_Types([],[]) = true
+	| consistent_Types (tau1::taus1, tau2::taus2) = consistent_Type(tau1,tau2) andalso consistent_Types(taus1,taus2)
+	| consistent_Types _ = false 
+*)
       fun eq_Type(tau1, tau2) =
 	case (tau1,tau2)
 	  of (TYVARtype tv1, TYVARtype tv2) => tv1=tv2
@@ -750,6 +780,7 @@ structure LambdaBasics: LAMBDA_BASICS =
               let val E = foldl (fn ((lv,_),E) => add(lv,NONE,E)) E pat
               in FN{pat=pat,body=N E body}
               end
+	    | CAST{ty2,ty1,exp} => CAST{ty2=ty2, ty1=ty1, exp=N E exp} 
 	    | LET{pat,bind,scope} => 
               let val (pat,E') = foldr (fn ((lv,tvs,tau),(pat,E)) => 
                                            let val ((tvs,tau),obl) = normScheme (tvs,tau)
@@ -806,10 +837,14 @@ structure LambdaBasics: LAMBDA_BASICS =
 
       fun norm (E:env, PGM(db,e)) =
           let val _ = F := NONE
-            val e = N E e
+	      val _ = chat "+"
+              val e = N E e
+	      val _ = chat "+"
             val E' = case !F of SOME E' => E'
                               | NONE => die "norm"
+	    val _ = chat "+"
             val _ = F := NONE
+	    val _ = chat "+"
           in (PGM(db,e),E')
           end
 
@@ -832,7 +867,8 @@ structure LambdaBasics: LAMBDA_BASICS =
                 | WORD _ => e
                 | STRING _ => e
                 | REAL _ => e
-	        | FN{pat,body} => FN{pat=pat,body=t true body} 
+	        | FN{pat,body} => FN{pat=pat,body=t true body}
+		| CAST{ty2,ty1,exp} => CAST{ty2=ty2, ty1=ty1, exp = t tail exp}
 	        | LET{pat,bind,scope} => 
                   LET{pat=pat,bind=t false bind,scope=t tail scope}
 	        | FIX{functions,scope} => 

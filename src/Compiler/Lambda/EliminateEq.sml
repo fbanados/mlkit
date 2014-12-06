@@ -642,6 +642,7 @@ structure EliminateEq: ELIMINATE_EQ =
 		| STRING _ => e
 		| REAL _ => e
 		| FN{pat,body} => FN{pat=pat,body=f body}
+		| CAST{ty2, ty1, exp} => CAST{ty2=ty2, ty1=ty1, exp=f exp}
 		| LET {pat, bind, scope} => LET {pat=pat, bind=f bind,scope=f scope}
 		| FIX {functions, scope} => 
 		 FIX {functions=map (fn {lvar,tyvars,Type,bind} => {lvar=lvar,tyvars=tyvars,Type=Type,bind=f bind}) functions, 

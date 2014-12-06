@@ -38,6 +38,7 @@ structure TypeInfo: TYPE_INFO =
     | ABSTYPE_INFO of TyEnv * realisation
     | EXP_INFO of {Type:Type}
     | MATCH_INFO of {Type:Type}
+    | CAST_INFO of {source:Type, dest: Type}
     | PLAINvalbind_INFO of {tyvars: TyVar list, Type: Type}
     | OPEN_INFO of strid list * tycon list * id list
     | INCLUDE_INFO of strid list * tycon list
@@ -71,6 +72,8 @@ structure TypeInfo: TYPE_INFO =
 	    | EXBIND_INFO {TypeOpt} => EXBIND_INFO {TypeOpt = map_opt phi_on_Type TypeOpt}
 	    | TYENV_INFO TE => TYENV_INFO (phi_on_TE TE)
 	    | ABSTYPE_INFO (TE,phi') => ABSTYPE_INFO (phi_on_TE TE, phi_on_phi' phi')
+	    | CAST_INFO {source, dest} => CAST_INFO{source=phi_on_Type source,
+						    dest=phi_on_Type dest}
 	    | EXP_INFO {Type} => EXP_INFO{Type=phi_on_Type Type}
 	    | MATCH_INFO {Type} => MATCH_INFO{Type=phi_on_Type Type}
 	    | PLAINvalbind_INFO {tyvars, Type} =>
@@ -160,6 +163,10 @@ structure TypeInfo: TYPE_INFO =
 	     PP.NODE{start="ABSTYPE_INFO(",finish=")",indent=2,
 		     children=[layoutTyEnv TE, PP.LEAF "phi"],
 		     childsep = PP.RIGHT ", "}
+	 | CAST_INFO{source, dest} =>
+	   PP.NODE{start="CAST_INFO(",finish=")",indent=2,
+		  children=[layoutType dest, layoutType source],
+		  childsep = PP.RIGHT " <= "}
 	 | EXP_INFO{Type} => 
 	     PP.NODE{start="EXP_INFO(",finish=")",indent=2,
 		     children=[layoutType Type],

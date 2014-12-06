@@ -114,6 +114,7 @@ structure LambdaExp: LAMBDA_EXP =
       | WORD     of Word32.word * Type
       | STRING   of string
       | REAL     of string
+      | CAST     of {ty2 : Type, ty1 : Type, exp : LambdaExp}
       | FN       of {pat : (lvar * Type) list, body : LambdaExp}
       | LET      of {pat : (lvar * tyvar list * Type) list,
 		     bind : LambdaExp,
@@ -163,6 +164,7 @@ structure LambdaExp: LAMBDA_EXP =
         | WORD _ => new_acc
         | STRING _ => new_acc
         | REAL _ => new_acc
+	| CAST{ty2,ty1,exp} => foldTD fcns new_acc exp 
 	| FN{pat,body} => foldTD fcns (foldl' (foldType g) new_acc (map #2 pat)) body
 	| LET{pat,bind,scope} => foldTD fcns (foldTD fcns (foldl' (foldType g) new_acc (map #3 pat)) bind) scope
 	| FIX{functions,scope} => foldTD fcns (foldl' (foldTD fcns) (foldl' (foldType g) new_acc (map #Type functions))  (map #bind functions)) scope
@@ -280,6 +282,7 @@ structure LambdaExp: LAMBDA_EXP =
 	  | STRING _	                => ()
 	  | REAL _	                => ()
 	  | FN _	                => ()
+	  | CAST {ty2,ty1,exp}          => safe exp
 	  | LET {bind,scope,...}        => (safe bind; safe scope)
 	  | FIX {scope,...}             => safe scope
 	  | APP _	                => raise NotSafe
@@ -754,6 +757,13 @@ structure LambdaExp: LAMBDA_EXP =
 
       | STRING s => PP.LEAF(quote s)
       | REAL r => PP.LEAF(r)
+      | CAST {ty2, ty1, exp} =>
+	PP.NODE{start="(cast ", finish=")", indent=6,
+		children =[layoutType ty2,
+			   layoutType ty1,
+			   layoutLambdaExp(exp,0)],
+		childsep=PP.RIGHT " <= "
+	       }
       | FN {pat,body} => 
 	  PP.NODE{start="(fn ",finish=")", indent=4,
 		  children=[layoutFnPat pat,
@@ -1475,6 +1485,7 @@ structure LambdaExp: LAMBDA_EXP =
         | WORD _ => acc
         | STRING _ => acc
         | REAL _ => acc
+	| CAST{ty2,ty1,exp} => tyvars_Type s ty2 (tyvars_Type s ty1 (tyvars_Exp s exp acc)) 
 	| FN{pat,body} => tyvars_Exp s body (foldl (fn ((_,t),acc) => tyvars_Type s t acc) acc pat)
 	| LET{pat,bind,scope} => 
           let val s' = foldl (fn ((_,tvs,_),s) => TVS.addList tvs s) s pat

@@ -269,7 +269,13 @@ structure CompileDec: COMPILE_DEC =
       fun type_of_match (match: DecGrammar.match) : StatObject.Type =
         case to_TypeInfo (get_info_match match) of 
           SOME(MATCH_INFO{Type}) => Type
-        | _ => die "type_of_match"
+         | _ => die "type_of_match"
+
+      fun type_of_cast (cast: DecGrammar.exp) : StatObject.Type * StatObject.Type =
+	  case to_TypeInfo (get_info_exp cast) of
+	      SOME(CAST_INFO{source,dest}) => (dest, source)
+	    | SOME(EXP_INFO{Type}) => die ("type_of_cast expinfo") 
+	    | _ => die ("type_of_cast") 
     end      
 
     fun map_opt f (SOME x) = SOME (f x)
@@ -2194,7 +2200,14 @@ end; (*match compiler local*)
 
 	   | TYPEDexp(_, exp, _) => compileExp env exp
 
-	   | CASTexp(_, _, _, exp) => compileExp env exp (*for now, we do not need to do anything fancy on compilation. this will change eventually.*) 
+	   | CASTexp(i, t2, t1, castedexp) => let val types = type_of_cast exp
+					    val dest = #1 types
+					    val source = #2 types
+					in CAST {ty2=compileType dest,
+					      ty1=compileType source,
+					      exp=compileExp env castedexp}
+					end
+	   (*for now, we do not need to do anything fancy on compilation. this will change eventually.*) 
 
 	   | HANDLEexp (info, exp', match) =>
 	       let val e1' = compileExp env exp'

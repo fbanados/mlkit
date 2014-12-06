@@ -423,8 +423,8 @@ structure LambdaStatSem: LAMBDA_STAT_SEM =
 
     (* we CANNOT use `=' to check equality of types - we use eq_Type. *)
 
-    val eq_Type = LambdaBasics.eq_Type
-    val eq_Types = LambdaBasics.eq_Types
+    val eq_Type = (*LambdaBasics.consistent_Type*)LambdaBasics.eq_Type
+    val eq_Types = (*LambdaBasics.consistent_Types*)LambdaBasics.eq_Types
 
     fun eqType s (tau,tau') = if eq_Type(tau,tau') then () 
 			      else (log "--------------------------------\n";
@@ -715,6 +715,17 @@ structure LambdaStatSem: LAMBDA_STAT_SEM =
 	      val ts_arg = map #2 pat
 	  in valid_ts env ts_arg; Types [ARROWtype(ts_arg, ts_body)]
 	  end
+	 | CAST{ty2, ty1, exp} =>  (* For now, we are not enforcing consistency restrictions on the lambda type system. *)
+	   let val ty_exp = (type_lexp env exp)
+	   in
+	       case ty_exp
+		of
+		   Types [ty1] =>
+		       Types [ty2]
+		 | Types _ => die "casted expression does not match type used."
+		 | _ => die "Expected the casted value to type."
+	   end
+			
 	 | LET {pat=nil,bind,scope} =>   (* wild card *)
 	  let val ts = unTypeList "WILD" (type_lexp env bind)
 	    val _ = if List.null ts then ()

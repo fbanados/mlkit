@@ -31,6 +31,9 @@ signature LAMBDA_BASICS =
     val on_LambdaExp : subst -> LambdaExp -> LambdaExp
 
     val eq_Type : Type * Type -> bool
+    (*val consistent_Type : Type * Type -> bool
+    val consistent_Types : Type list * Type list -> bool					     
+     *)   
     val eq_Types : Type list * Type list -> bool
     val eq_sigma : (tyvar list * Type) * (tyvar list * Type) -> bool
     val eq_sigma_with_il : (tyvar list * Type * Type list) * 

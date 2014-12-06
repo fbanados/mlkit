@@ -2366,8 +2366,23 @@ structure OptLambda: OPT_LAMBDA =
 			layout_unbox_fix_env e3, 
 			layout_uc_env e4, layout_contract_env e5,
 			layout_contract_env e6]}
-      
 
+    (*
+     * Cast-removal: This optimization transforms casts into simpler
+     * sets of instructions, so that we don't need to modify the region
+     * language.
+     *)
+
+    fun cast_remove lamb =
+	let val pat = [(Lvars.new_named_lvar "eq_function", [], CONStype([], TyName.tyName_STRING))]
+	    val bind = STRING "asdf"
+	in
+	    LET{pat= pat,
+		bind= bind,
+		scope= lamb}
+	end
+
+	     
    (* -----------------------------------------------------------------
     * Rewriting: This rewriting shall always be performed, no matter
     * whether the lamb is optimised or not, and it shall always be
@@ -2381,6 +2396,23 @@ structure OptLambda: OPT_LAMBDA =
 	in (lamb, (inveta_env, let_env))
 	end
 
+	    (* runtimeCastDb adds the "type" type and the "cast" value to the environment of datatypes. In compilation time :D *)
+    fun runtimeCastDb db =
+	(* add data bindings, which work as a list of list of tuples *)
+	(* each tuple is tyvar list * TyName * (con * Type option) list. *)
+	let val RuntimeTypeTyName = TyName.freshTyName {tycon=TyName.mk_TyCon "RuntimeType", arity=0, equality=true}
+	    val RuntimeTypes = [(Con.mk_con ("RTdyn"), NONE ),
+			        (Con.mk_con ("RTstring"), NONE )]
+	    val RuntimeType = ([], RuntimeTypeTyName, RuntimeTypes)
+	    val CastedValueTyVar = LambdaExp.fresh_tyvar ()
+	    val CastedValueTyName = TyName.freshTyName {tycon=TyName.mk_TyCon "CastedValue", arity=1, equality=true}
+	    val CastedValues = [(Con.mk_con("CASTEDVALUE"), SOME(RECORDtype([CONStype([], RuntimeTypeTyName),
+									     CONStype([], RuntimeTypeTyName),
+									     TYVARtype CastedValueTyVar])))]
+	    val CastedValue = ([CastedValueTyVar], CastedValueTyName, CastedValues)
+	in
+	db @ [[RuntimeType, CastedValue]]
+	end
 
    (* -----------------------------------------------------------------
     * The Optimiser
@@ -2390,10 +2422,13 @@ structure OptLambda: OPT_LAMBDA =
 	if optimise_p() then optimise cenv e
 	else (e, contract_env_dummy e)
 
+		
     fun optimise (env, PGM(DATBINDS db,lamb)) =
 	let
 	    val (env1,env2,ubenv,ucenv,cenv,cenv2) = env
-	    val (lamb, cenv) = maybeoptimise cenv lamb 
+	    (* Remove casts first! *)
+	    val db = runtimeCastDb db
+	    val (lamb, cenv) = maybeoptimise cenv (cast_remove lamb) 
 	    val lamb = fix_conversion lamb
 (*	    val _ = prLambdaExp "Before unbox" lamb *)
 	    val (lamb, ubenv) = unbox_fix_args ubenv lamb
