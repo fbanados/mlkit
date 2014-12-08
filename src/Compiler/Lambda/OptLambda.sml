@@ -2373,13 +2373,66 @@ structure OptLambda: OPT_LAMBDA =
      * language.
      *)
 
-    fun cast_remove lamb =
-	let val pat = [(Lvars.new_named_lvar "eq_function", [], CONStype([], TyName.tyName_STRING))]
-	    val bind = STRING "asdf"
+    fun cast_remove lamb (rtycons : {dyn:con, string:con}) cvcon (rtype : (tyvar list * TyName * (con * Type option) list)) cvalue CastErrorCon=
+	let val scoped_names = {eq_function = ([(Lvars.new_named_lvar "eq_function", [], CONStype([], TyName.tyName_STRING))],
+					       STRING "asdf")
+						  }
+	    fun bind pair body =
+		LET{pat = #1 pair,
+		    bind = #2 pair,
+		    scope = body}
+	    fun runtime_type ty =
+		let val dyntyname = TyName.tyName_DYN
+		    val strtyname = TyName.tyName_STRING
+		in
+		case ty of
+		    CONStype([], name) => let val constructor = if TyName.eq(name, TyName.tyName_DYN)
+								then #dyn rtycons
+								else #string rtycons
+					  in PRIM(CONprim{con=constructor,instances=[]},[])
+					  end
+		  | _ => PRIM(CONprim{con=(#dyn rtycons), instances=[]},[])
+		end
+	    fun replace_casts lamb =
+		case lamb of
+		    CAST{ty2,ty1,exp} =>
+		    let val value = Lvars.new_named_lvar("value")
+		    in
+			LET{pat = [(value,
+				    [],
+				    ty1)],
+			    bind = exp,
+			    scope =
+			    SWITCH_C(
+				(* switch case for default? *)
+				SWITCH(
+				    VAR{lvar=value, instances=[]},
+				    [],
+				    SOME(RAISE(PRIM(EXCONprim(CastErrorCon),[]),
+					  Types [ty2]))))}
+		    end
+		                          (*PRIM(CONprim{con=cvcon,instances=[ty1]},
+					      [PRIM(RECORDprim,
+						    [runtime_type ty2,
+						     runtime_type ty1,
+						     exp])])*)
+		  | FN{pat,body}  => FN{pat=pat, body=replace_casts body}
+		  | LET{pat, bind, scope} => LET{pat=pat,
+						 bind=replace_casts bind,
+						 scope=replace_casts scope}
+		  | FIX{functions, scope} =>FIX{functions= map
+								(fn x => {lvar=(#lvar x),
+									  tyvars=(#tyvars x),
+									  Type=(#Type x),
+									  bind=(replace_casts (#bind x))})
+								functions,
+						 scope=replace_casts scope} 
+		  | APP(f, arg, tail) => APP(replace_casts f,
+					     replace_casts arg,
+					     tail)
+		  | _ =>lamb 
 	in
-	    LET{pat= pat,
-		bind= bind,
-		scope= lamb}
+	    bind (#eq_function scoped_names) (replace_casts lamb)
 	end
 
 	     
@@ -2402,16 +2455,19 @@ structure OptLambda: OPT_LAMBDA =
 	(* each tuple is tyvar list * TyName * (con * Type option) list. *)
 	let val RuntimeTypeTyName = TyName.freshTyName {tycon=TyName.mk_TyCon "RuntimeType", arity=0, equality=true}
 	    val RuntimeTypes = [(Con.mk_con ("RTdyn"), NONE ),
-			        (Con.mk_con ("RTstring"), NONE )]
+				(Con.mk_con ("RTstring"), NONE )]
+	    val RuntimeTypeCons = {dyn=(#1 (hd RuntimeTypes)),
+				   string = (#1 (List.nth(RuntimeTypes, 1)))}
 	    val RuntimeType = ([], RuntimeTypeTyName, RuntimeTypes)
 	    val CastedValueTyVar = LambdaExp.fresh_tyvar ()
 	    val CastedValueTyName = TyName.freshTyName {tycon=TyName.mk_TyCon "CastedValue", arity=1, equality=true}
-	    val CastedValues = [(Con.mk_con("CASTEDVALUE"), SOME(RECORDtype([CONStype([], RuntimeTypeTyName),
+	    val CastedValueCon =Con.mk_con("CASTEDVALUE")
+	    val CastedValues = [(CastedValueCon, SOME(RECORDtype([CONStype([], RuntimeTypeTyName),
 									     CONStype([], RuntimeTypeTyName),
 									     TYVARtype CastedValueTyVar])))]
 	    val CastedValue = ([CastedValueTyVar], CastedValueTyName, CastedValues)
 	in
-	db @ [[RuntimeType, CastedValue]]
+	(db @ [[RuntimeType, CastedValue]], RuntimeTypeCons, CastedValueCon, RuntimeType, CastedValue)
 	end
 
    (* -----------------------------------------------------------------
@@ -2425,10 +2481,13 @@ structure OptLambda: OPT_LAMBDA =
 		
     fun optimise (env, PGM(DATBINDS db,lamb)) =
 	let
+	    val CastErrorCon = Excon.ex_CASTERROR
 	    val (env1,env2,ubenv,ucenv,cenv,cenv2) = env
 	    (* Remove casts first! *)
-	    val db = runtimeCastDb db
-	    val (lamb, cenv) = maybeoptimise cenv (cast_remove lamb) 
+	    val (db, rtys, cvcon, rtype, cvalue) = runtimeCastDb db
+	    (* This cast removal function was helful for debugging *)
+	    (* val lamb = (cast_remove lamb rtys cvcon rtype cvalue CastErrorCon) *)
+	    val (lamb, cenv) = maybeoptimise cenv lamb
 	    val lamb = fix_conversion lamb
 (*	    val _ = prLambdaExp "Before unbox" lamb *)
 	    val (lamb, ubenv) = unbox_fix_args ubenv lamb

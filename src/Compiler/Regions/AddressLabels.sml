@@ -44,7 +44,8 @@ structure AddressLabels: ADDRESS_LABELS =
     val exn_BIND_lab = (Name.exn_BIND, "exn_BIND")                (* label 9 *)
     val exn_OVERFLOW_lab = (Name.exn_OVERFLOW, "exn_OVERFLOW")    (* label 10 *)
     val exn_INTERRUPT_lab = (Name.exn_INTERRUPT, "exn_INTERRUPT") (* label 11 *)
-
+    val exn_CASTERROR_lab = (Name.exn_CASTERROR, "exn_CASTERROR") (* label 12 *)
+				
     val pu =
 	Pickle.hashConsEq eq
 	(Pickle.register "AddressLabels"

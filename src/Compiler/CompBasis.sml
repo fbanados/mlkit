@@ -149,7 +149,7 @@ structure CompBasis: COMP_BASIS =
 	 * identifiers below.  Martin-18/03/1998 *)
 
 	  val excons = Excon.ex_DIV :: 
-	        Excon.ex_MATCH :: Excon.ex_BIND :: excons
+	        Excon.ex_MATCH :: Excon.ex_BIND :: Excon.ex_CASTERROR :: excons
 	  val cons = Con.con_NIL :: Con.con_CONS ::
 	      Con.con_TRUE :: Con.con_FALSE :: Con.con_INTINF :: cons   (* for elim eq *)
 	  val cons = if quotation() then Con.con_QUOTE :: Con.con_ANTIQUOTE :: cons

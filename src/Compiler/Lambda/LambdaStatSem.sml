@@ -192,7 +192,8 @@ structure LambdaStatSem: LAMBDA_STAT_SEM =
 			      (Excon.ex_MATCH, NONE),
 			      (Excon.ex_BIND, NONE),
 			      (Excon.ex_OVERFLOW, NONE),
-			      (Excon.ex_INTERRUPT, NONE)]
+			      (Excon.ex_INTERRUPT, NONE),
+			      (Excon.ex_CASTERROR, NONE)]
 
 	val ftv_initial =
 	  ConMap.fold (fn (sigma,set) => NatSet.union (ftv_TypeScheme sigma) set)
@@ -423,8 +424,8 @@ structure LambdaStatSem: LAMBDA_STAT_SEM =
 
     (* we CANNOT use `=' to check equality of types - we use eq_Type. *)
 
-    val eq_Type = (*LambdaBasics.consistent_Type*)LambdaBasics.eq_Type
-    val eq_Types = (*LambdaBasics.consistent_Types*)LambdaBasics.eq_Types
+    val eq_Type = LambdaBasics.consistent_Type(*)LambdaBasics.eq_Type*)
+    val eq_Types = LambdaBasics.consistent_Types(*)LambdaBasics.eq_Types*)
 
     fun eqType s (tau,tau') = if eq_Type(tau,tau') then () 
 			      else (log "--------------------------------\n";

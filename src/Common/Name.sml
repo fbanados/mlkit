@@ -103,7 +103,8 @@ structure Name: NAME =
     val exn_BIND = new_rigid()            (* name 9 *)
     val exn_OVERFLOW = new_rigid()        (* name 10 *)
     val exn_INTERRUPT = new_rigid()       (* name 11 *)
-
+    val exn_CASTERROR = new_rigid()       (* name 12 *)
+				 
     local
 	fun toRec (k,r,g) = {key=k, rigid=r, gen_mark=g}
 	fun fromRec {key, rigid, gen_mark} = (key,rigid,gen_mark)

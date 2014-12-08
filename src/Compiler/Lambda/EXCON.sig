@@ -28,6 +28,7 @@ signature EXCON =
     val ex_BIND     : excon
     val ex_OVERFLOW : excon
     val ex_INTERRUPT : excon
+    val ex_CASTERROR : excon
 
     val exconsPredefined : excon list
 

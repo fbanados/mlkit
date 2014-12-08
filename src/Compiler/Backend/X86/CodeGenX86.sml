@@ -3055,9 +3055,10 @@ val _ = List.app (fn lab => print ("\n" ^ (I.pr_lab lab))) (List.rev dat_labs)
                                     (1, "Bind", NameLab "exn_BIND", DatLab BI.exn_BIND_lab),
                                     (2, "Overflow", NameLab "exn_OVERFLOW", DatLab BI.exn_OVERFLOW_lab),
                                     (3, "Interrupt", NameLab "exn_INTERRUPT", DatLab BI.exn_INTERRUPT_lab),
-                                    (4, "Div", NameLab "exn_DIV", DatLab BI.exn_DIV_lab)]
-        val initial_exnname_counter = 5
-
+                                    (4, "Div", NameLab "exn_DIV", DatLab BI.exn_DIV_lab),
+				    (5, "CastError", NameLab "exn_CASTERROR", DatLab BI.exn_CASTERROR_lab)]
+        val initial_exnname_counter = 6
+					  
         fun init_primitive_exception_constructors_code C = 
           foldl (fn (t,C) => setup_primitive_exception(t,C)) C primitive_exceptions
 

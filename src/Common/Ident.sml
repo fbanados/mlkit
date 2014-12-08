@@ -72,7 +72,8 @@ structure Ident: IDENT =
     val id_Bind = ID "Bind"
     val id_Overflow = ID "Overflow"
     val id_Interrupt = ID "Interrupt"
-
+    val id_CastError = ID "CastError"
+			  
     (* misc: *)
 
     val bogus = LONGID (nil, ID "<bogus>")

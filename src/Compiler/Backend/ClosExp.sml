@@ -3102,7 +3102,7 @@ struct
 		| member e (x::xs) = Excon.eq(e,x) orelse member e xs
 	      fun filter (e, acc) =
 	        if member e [Excon.ex_DIV,Excon.ex_MATCH,Excon.ex_BIND,
-			     Excon.ex_OVERFLOW,Excon.ex_INTERRUPT] then acc
+			     Excon.ex_OVERFLOW,Excon.ex_INTERRUPT, Excon.ex_CASTERROR] then acc
 		else e::acc
 	      val (lvars,excons,rhos) = 
 		valOf(!import_vars) 

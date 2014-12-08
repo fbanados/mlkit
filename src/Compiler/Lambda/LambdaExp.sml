@@ -1355,6 +1355,7 @@ structure LambdaExp: LAMBDA_EXP =
 	      | toInt (SWITCH_E _) = 16
 	      | toInt (PRIM _) = 17
 	      | toInt (FRAME _) = 18
+	      | toInt (CAST _) = 19 
 
 	    fun fun_VAR pu_LambdaExp =
 		Pickle.con1 VAR (fn VAR a => a | _ => die "pu_LambdaExp.VAR")

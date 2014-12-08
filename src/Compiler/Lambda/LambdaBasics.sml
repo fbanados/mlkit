@@ -624,23 +624,8 @@ structure LambdaBasics: LAMBDA_BASICS =
 
       val on_LambdaExp = on_LambdaExp
 
-			     (*
-      fun consistent_Type(tau1, tau2) =
-	  case (tau1, tau2)
-	   of
-	      (ARROWtype(taus1, taus1'), ARROWtype (taus2, taus2')) =>
-	      consistent_Types(taus1, taus2) andalso consistent_Types(taus1', taus2')
-	    | (CONStype(taus1, tn1), CONStype(taus2, tn2)) =>
-	      consistent_Types(taus1, taus2) andalso TyName.eq(tn1, tn2)
-							      (* todo: check if this needs to consider dyn too *)
-	    | (RECORDtype taus1, RECORDtype taus2) => consistent_Types(taus1, taus2)
-	    | (dynType, _) => true
-	    |  (_, dynType) => true
-	    | (_, _) => false
-      and consistent_Types([],[]) = true
-	| consistent_Types (tau1::taus1, tau2::taus2) = consistent_Type(tau1,tau2) andalso consistent_Types(taus1,taus2)
-	| consistent_Types _ = false 
-*)
+			     
+
       fun eq_Type(tau1, tau2) =
 	case (tau1,tau2)
 	  of (TYVARtype tv1, TYVARtype tv2) => tv1=tv2
@@ -654,6 +639,26 @@ structure LambdaBasics: LAMBDA_BASICS =
 	| eq_Types(tau1::taus1,tau2::taus2) = eq_Type(tau1,tau2) andalso eq_Types(taus1,taus2)
 	| eq_Types _ = false
 
+      fun consistent_Type(tau1, tau2) =
+	  case (tau1, tau2)
+	   of
+	      (ARROWtype(taus1, taus1'), ARROWtype (taus2, taus2')) =>
+	      consistent_Types(taus1, taus2) andalso consistent_Types(taus1', taus2')
+	    | (CONStype(taus1, tn1), CONStype(taus2, tn2)) =>
+	      consistent_Types(taus1, taus2) andalso (TyName.eq(tn1, tn2)
+						      orelse
+						      TyName.eq(tn1, TyName.tyName_DYN)
+						      orelse
+						      TyName.eq(tn2, TyName.tyName_DYN))
+	    | (RECORDtype taus1, RECORDtype taus2) => consistent_Types(taus1, taus2)
+	    |  _ => eq_Type(tau1, CONStype([], TyName.tyName_DYN))
+			   orelse eq_Type(tau2, CONStype([], TyName.tyName_DYN))
+			   orelse eq_Type(tau1, tau2)
+				  
+      and consistent_Types([],[]) = true
+	| consistent_Types (tau1::taus1, tau2::taus2) = consistent_Type(tau1,tau2) andalso consistent_Types(taus1,taus2)
+	| consistent_Types _ = false 
+			   
       fun eq_sigma_with_il(([],tau1,[]),([],tau2,[])) = eq_Type(tau1,tau2)
 	| eq_sigma_with_il((tvs1,tau1,il1),(tvs2,tau2,il2)) = 
 	if length tvs1 <> length tvs2 then false

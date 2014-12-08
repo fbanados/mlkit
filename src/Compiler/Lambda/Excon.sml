@@ -38,6 +38,7 @@ structure Excon: EXCON =
 	val ex_BIND  : excon      = predef "Bind"
 	val ex_OVERFLOW  : excon  = predef "Overflow"
 	val ex_INTERRUPT : excon  = predef "Interrupt"
+	val ex_CASTERROR : excon  = predef "CastError"		   
 	val exconsPredefined = !bucket
     end
 
