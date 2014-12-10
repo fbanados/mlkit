@@ -23,7 +23,8 @@ in
   Lambda/COMPILE_DEC.sml
 
   local open Edlib Pickle Tools CompilerObjects
-  in Lambda/OptLambda.sml
+  in Lambda/CastConversions.sml
+     Lambda/OptLambda.sml
   end
   local open Pickle Tools CompilerObjects
   in Lambda/LambdaStatSem.sml
