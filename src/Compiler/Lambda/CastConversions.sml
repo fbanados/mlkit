@@ -54,8 +54,8 @@ fun gen_failing (ty2 : Type) (ty1 : Type) : LambdaExp =
 
 (* gen_switch_wrapped : This function generates a function that typecases a dyn, and if so evaluates a LambdaExp, otherwise fails with a CastError. *)
 (* use with wan of the wrappercons in DynWrapper *)
-fun gen_switch_wrapped (ty2 : Type) (wrapcon : con) : (lvar * (LambdaExp -> LambdaExp))=
-    let val z0 = Lvars.newLvar()
+fun gen_switch_wrapped (ty1 : Type) (wrapcon : con) : (lvar * (LambdaExp -> LambdaExp))=
+    let val z0 = Lvars.new_named_lvar("SwitchWrappedZ0")
     in
 	(z0,
 	 fn (iftrue : LambdaExp) => 
@@ -66,12 +66,12 @@ fun gen_switch_wrapped (ty2 : Type) (wrapcon : con) : (lvar * (LambdaExp -> Lamb
 					   dyn_switch,
 					   (* assuming behaviour is "else do", throw the exception otherwise. *)
 					   SOME(RAISE(PRIM(EXCONprim(Excon.ex_CASTERROR),[]),
-						      Types [ty2]))))}
+						      Types [ty1]))))}
 	    end) (* or some lambdaexp*)
     end
 
 fun gen_basic_value_wrapper (ty1 : Type) : LambdaExp =
-    let val z = Lvars.newLvar()
+    let val z = Lvars.new_named_lvar("basic_value_wrapper")
     in
 	case ty1 of
 	    CONStype (tl, name) =>
@@ -100,7 +100,8 @@ fun cast_function_ty2_string (ty1: Type) : LambdaExp =
 				then let val (z, f) = gen_switch_wrapped LambdaExp.stringType
 									 (#string DynWrapper.wrappercons)
 				     in
-					 f(VAR{lvar=z, instances=[]})
+					 f(PRIM(DECONprim{con=(#string DynWrapper.wrappercons), instances=[], lv_opt=NONE},
+						[VAR{lvar=z, instances=[]}]))
 				     end
 				else gen_failing LambdaExp.stringType ty1)
       | _ => gen_failing LambdaExp.stringType ty1 
@@ -113,7 +114,8 @@ and cast_function_ty2_bool (ty1 : Type) : LambdaExp =
 				    then let val (z, f) = gen_switch_wrapped LambdaExp.boolType
 									     (#bool DynWrapper.wrappercons)
 					 in
-					     f(VAR{lvar=z, instances=[]})
+					     f(PRIM(DECONprim{con=(#bool DynWrapper.wrappercons), instances=[], lv_opt=NONE},
+						    [VAR{lvar=z, instances=[]}]))
 					 end
 				    else gen_failing LambdaExp.stringType ty1)
 	  | _ => gen_failing LambdaExp.stringType ty1
@@ -125,7 +127,7 @@ and cast_function_ty2_dyn (ty1: Type) : LambdaExp =
 				else gen_basic_value_wrapper ty1)
       | ARROWtype (_, []) => gen_failing dynType ty1 (* no void functions, please *)
       | ARROWtype (dom, rng) =>
-	let val z = Lvars.newLvar()
+	let val z = Lvars.new_named_lvar("CastToDynFromArow")
 	in
 	    FN{pat=[(z,ty1)],
 	       body = PRIM (CONprim{con=(#fun_dyn_dyn DynWrapper.wrappercons),
@@ -156,13 +158,16 @@ and cast_function_ty2_fn (ty21 : Type) (ty22: Type) (ty1: Type) : LambdaExp =
 	end
      |  CONStype(_ , name) => if TyName.eq(name, TyName.tyName_DYN)
 			      then
-				  let val (z, f) = gen_switch_wrapped (ARROWtype([dynType],[dynType]))
+				  let val (z, f) = gen_switch_wrapped (ARROWtype([ty21],[ty22]))
 								      (#fun_dyn_dyn DynWrapper.wrappercons)
 				  in
 				      f(APP(cast_function((ARROWtype([ty21],[ty22])),
-							  (ARROWtype([dynType], [dynType]))),
-					    VAR{lvar=z, instances=[]},
-					    NONE))
+								    (ARROWtype([dynType], [dynType]))),
+						      (PRIM(DECONprim{con=(#fun_dyn_dyn DynWrapper.wrappercons),
+								      instances=[],
+								      lv_opt=NONE},
+							    [VAR{lvar=z, instances=[]}])),
+						      NONE))
 				  end				  
 			      else gen_failing (ARROWtype([ty21], [ty22])) ty1
      | _ => gen_failing  (ARROWtype([ty21], [ty22])) ty1
@@ -189,31 +194,16 @@ and cast_function (ty2 : Type, ty1 : Type) : LambdaExp=
      *)
 
 fun cast_remove (lamb : LambdaExp) =
-    let (*val scoped_names = {eq_function = ([(Lvars.new_named_lvar "eq_function", [],
-					     ARROWtype([LambdaExp.dynType],[LambdaExp.stringType]))],
-					   gen_failing LambdaExp.stringType LambdaExp.dynType
-					   
-					   (*(gen_switch_wrapped LambdaExp.stringType
-									   (#string DynWrapper.wrappercons)
-									   (STRING "asdf"))*))
-			       }
-	    val bind : (((lvar * tyvar list * Type) list * LambdaExp) * LambdaExp ) -> LambdaExp = fn (pair: ((lvar * tyvar list * Type) list * LambdaExp), body : LambdaExp) =>
-		LET{pat = (#1 pair),
-		    bind = (#2 pair),
-		    scope = body}
-(*	    fun runtime_type ty =
-		let val dyntyname = TyName.tyName_DYN
-		    val strtyname = TyName.tyName_STRING
+    let fun replace_casts (lamb : LambdaExp) : LambdaExp =
+	    let fun replace_switch ((e1, exps, e2) : (LambdaExp * ('a * LambdaExp) list * LambdaExp option)) : 'a Switch  =
+				    let val e2' = case e2 of
+						      SOME(e) => SOME(replace_casts e)
+						    | NONE => NONE
+				    in SWITCH(replace_casts e1,
+					      (map (fn ((a, exp) : ('a * LambdaExp)) => (a, replace_casts exp)) exps),
+					      e2')
+				    end
 		in
-		case ty of
-		    CONStype([], name) => let val constructor = if TyName.eq(name, TyName.tyName_DYN)
-								then #dyn DynWrapper.wrappercons
-								else #string DynWrapper.wrappercons
-					  in PRIM(CONprim{con=constructor,instances=[]},[])
-					  end
-		  | _ => PRIM(CONprim{con=(#dyn rtycons), instances=[]},[])
-		end*)*)
-	    val rec replace_casts : LambdaExp -> LambdaExp = fn lamb =>
 		case lamb of
 		    CAST{ty2,ty1,exp} =>
 		    let val function = cast_function(ty2, ty1)
@@ -236,9 +226,23 @@ fun cast_remove (lamb : LambdaExp) =
 		  | APP(f, arg, tail) => APP(replace_casts f,
 					     replace_casts arg,
 					     tail)
-		  | _ =>lamb 
+		  | EXCEPTION (excon, t, exp) => EXCEPTION(excon, t, replace_casts exp)
+		  | RAISE (exp, t) => RAISE(replace_casts exp, t)
+		  | HANDLE (e1, e2) => HANDLE(replace_casts e1, replace_casts e2)
+		  | SWITCH_I {switch as SWITCH(e1, exps, e2), precision} =>
+			SWITCH_I{switch=replace_switch (e1,exps,e2),
+				 precision=precision}
+		  | SWITCH_W{switch as SWITCH(e1, exps, e2), precision} =>
+		    SWITCH_W{switch=replace_switch (e1,exps,e2),
+			     precision=precision}
+		  | SWITCH_S (s as SWITCH(e1, exps, e2)) => SWITCH_S(replace_switch(e1,exps,e2))
+		  | SWITCH_C (s as SWITCH(e1, exps, e2)) => SWITCH_C(replace_switch(e1,exps,e2))
+		  | SWITCH_E (s as SWITCH(e1, exps, e2)) => SWITCH_E(replace_switch(e1,exps,e2))
+		  | PRIM (tp, args) => PRIM(tp, map replace_casts args)
+		  | _ =>lamb
+	    end
+	    
 	in
-	    (*bind((#eq_function scoped_names) , (replace_casts lamb) )*)
 	    replace_casts lamb
 	end
 

@@ -424,8 +424,8 @@ structure LambdaStatSem: LAMBDA_STAT_SEM =
 
     (* we CANNOT use `=' to check equality of types - we use eq_Type. *)
 
-    val eq_Type = LambdaBasics.consistent_Type(*)LambdaBasics.eq_Type*)
-    val eq_Types = LambdaBasics.consistent_Types(*)LambdaBasics.eq_Types*)
+    val eq_Type = (*LambdaBasics.consistent_Type*)LambdaBasics.eq_Type(**)
+    val eq_Types = (*LambdaBasics.consistent_Types*)LambdaBasics.eq_Types(**)
 
     fun eqType s (tau,tau') = if eq_Type(tau,tau') then () 
 			      else (log "--------------------------------\n";
@@ -468,7 +468,10 @@ structure LambdaStatSem: LAMBDA_STAT_SEM =
      *)
 
     fun lub (tl as Types ts, Types ts') = if eq_Types(ts,ts') then tl
-					  else die "lub. Types vs. Types"
+					  else die ("lub. Types: "^
+						    (foldl (op ^) "" (map pr_Type ts)) ^
+						    "\n vs. Types:  " ^
+						    (foldl (op ^) "" (map pr_Type ts')))
       | lub (RaisedExnBind, tl) = tl
       | lub (tl, RaisedExnBind) = tl
       | lub _ = die "lub. not defined for these args"
