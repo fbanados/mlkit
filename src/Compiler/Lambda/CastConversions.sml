@@ -37,7 +37,7 @@ fun runtime_datatype_binds db =
 	
 (* gen_identity : This function generates Identity Cast Functions of type t *)
 fun gen_identity (ty : Type) : LambdaExp =
-    let val z = Lvars.newLvar()
+    let val z = Lvars.new_named_lvar("identity_z_"^ PrettyPrint.flatten1 (layoutType ty))
     in
 	FN{pat= [(z, ty)],
 	   body = VAR{lvar=z,instances=[]}}
@@ -45,7 +45,8 @@ fun gen_identity (ty : Type) : LambdaExp =
 
 (* gen_failing : This function generates a Failing cast function of source type ty1 and destination type ty2*)
 fun gen_failing (ty2 : Type) (ty1 : Type) : LambdaExp =
-    let val z = Lvars.newLvar()
+    let val z = Lvars.new_named_lvar("failing_z_" ^ PrettyPrint.flatten1 (layoutType ty1)
+				     ^ "_to_" ^ PrettyPrint.flatten1 (layoutType ty2))
     in
 	FN{pat = [(z, ty1)],
 	   body = RAISE(PRIM(EXCONprim(Excon.ex_CASTERROR),[]),
@@ -55,7 +56,7 @@ fun gen_failing (ty2 : Type) (ty1 : Type) : LambdaExp =
 (* gen_switch_wrapped : This function generates a function that typecases a dyn, and if so evaluates a LambdaExp, otherwise fails with a CastError. *)
 (* use with wan of the wrappercons in DynWrapper *)
 fun gen_switch_wrapped (ty1 : Type) (wrapcon : con) : (lvar * (LambdaExp -> LambdaExp))=
-    let val z0 = Lvars.new_named_lvar("SwitchWrappedZ0")
+    let val z0 = Lvars.new_named_lvar("switch_wrapped_z0_dyn")
     in
 	(z0,
 	 fn (iftrue : LambdaExp) => 
@@ -71,7 +72,7 @@ fun gen_switch_wrapped (ty1 : Type) (wrapcon : con) : (lvar * (LambdaExp -> Lamb
     end
 
 fun gen_basic_value_wrapper (ty1 : Type) : LambdaExp =
-    let val z = Lvars.new_named_lvar("basic_value_wrapper")
+    let val z = Lvars.new_named_lvar("basic_value_wrapper_z_" ^ PrettyPrint.flatten1 (layoutType ty1))
     in
 	case ty1 of
 	    CONStype (tl, name) =>
@@ -117,8 +118,8 @@ and cast_function_ty2_bool (ty1 : Type) : LambdaExp =
 					     f(PRIM(DECONprim{con=(#bool DynWrapper.wrappercons), instances=[], lv_opt=NONE},
 						    [VAR{lvar=z, instances=[]}]))
 					 end
-				    else gen_failing LambdaExp.stringType ty1)
-	  | _ => gen_failing LambdaExp.stringType ty1
+				    else gen_failing LambdaExp.boolType ty1)
+	  | _ => gen_failing LambdaExp.boolType ty1
 			     
 and cast_function_ty2_dyn (ty1: Type) : LambdaExp =
     case ty1 of
@@ -127,7 +128,7 @@ and cast_function_ty2_dyn (ty1: Type) : LambdaExp =
 				else gen_basic_value_wrapper ty1)
       | ARROWtype (_, []) => gen_failing dynType ty1 (* no void functions, please *)
       | ARROWtype (dom, rng) =>
-	let val z = Lvars.new_named_lvar("CastToDynFromArow")
+	let val z = Lvars.new_named_lvar("cast_function_ty2_dyn_z_" ^ PrettyPrint.flatten1 (layoutType ty1))
 	in
 	    FN{pat=[(z,ty1)],
 	       body = PRIM (CONprim{con=(#fun_dyn_dyn DynWrapper.wrappercons),
@@ -142,13 +143,14 @@ and cast_function_ty2_dyn (ty1: Type) : LambdaExp =
 and cast_function_ty2_fn (ty21 : Type) (ty22: Type) (ty1: Type) : LambdaExp =
     case ty1 of
 	ARROWtype (ty11 :: [], ty12 :: []) =>
-	let val f = Lvars.newLvar()
-	    val z = Lvars.newLvar()
+	let val f = Lvars.new_named_lvar("cast_function_ty2_fn_f" ^ PrettyPrint.flatten1 (layoutType ty1) ^
+					 "_domain_" ^ PrettyPrint.flatten1 (layoutType ty11))
+	    val z = Lvars.new_named_lvar("cast_function_ty2_fn_z" ^ PrettyPrint.flatten1 (layoutType ty21))
 	in
 	    (* (lambda f : t1 . (lambda z : t21. (cast t22 <= t12 (f (cast t11 <= t21 z))))) *)
 	    FN{pat =[(f, ty1)],
 	       body = FN{pat=[(z,ty21)],
-			 body =APP ( cast_function (ty22, ty11),
+			 body =APP ( cast_function (ty22, ty12),
 				     APP(VAR{lvar=f, instances=[]},
 					 APP( cast_function (ty11, ty21),
 					      VAR{lvar=z, instances=[]},
